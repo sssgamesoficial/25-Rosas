@@ -26,10 +26,13 @@ const maxRosas = 25;
 let clicks = 0;
 let explosionHecha = false;
 
-// 🌅 tiempo día/noche
+// 🌬️ viento global
+let vientoTiempo = 0;
+
+// 🌅 día/noche
 let tiempoDia = 0;
 
-// 🖼️ IMÁGENES
+// 🖼️ imágenes
 const imgRosa = new Image();
 imgRosa.src = "rosa.png";
 
@@ -48,14 +51,14 @@ let animandoSemilla = false;
 let puntos = [];
 let progresoRosas = new Array(maxRosas).fill(0);
 
-// 🌸 pétalos (más lentos)
+// 🌸 pétalos
 const petalos = [];
 
 function crearPetalo(x, y) {
   petalos.push({
     x, y,
     vx: Math.random() * 0.2 - 0.1,
-    vy: Math.random() * 0.3 + 0.1, // 👈 más lento
+    vy: Math.random() * 0.3 + 0.1,
     size: Math.random() * 2 + 1.5,
     rot: Math.random() * Math.PI,
     vr: Math.random() * 0.05 - 0.02
@@ -65,8 +68,7 @@ function crearPetalo(x, y) {
 function explosionPetalos(x, y) {
   for (let i = 0; i < 80; i++) {
     petalos.push({
-      x,
-      y,
+      x, y,
       vx: Math.random() * 3 - 1.5,
       vy: Math.random() * -3 - 1,
       size: Math.random() * 3 + 2,
@@ -76,7 +78,7 @@ function explosionPetalos(x, y) {
   }
 }
 
-function dibujarPetalos() {
+function dibujarPetalos(viento) {
   ctx.fillStyle = "#ff6b6b";
 
   petalos.forEach(p => {
@@ -90,29 +92,32 @@ function dibujarPetalos() {
 
     ctx.restore();
 
-    p.x += p.vx;
+    p.x += p.vx + viento * 0.3;
     p.y += p.vy;
-    p.vy += 0.02; // 👈 gravedad más suave
+    p.vy += 0.02;
     p.rot += p.vr;
   });
 
   petalos.splice(0, petalos.length - 300);
 }
 
-// 🦋 MARIPOSAS (ARREGLADAS)
+// 🦋 MARIPOSAS (más y con colores)
+const colores = ["#ff9ed6","#ffd6a5","#a0c4ff","#caffbf","#ffc6ff"];
+
 const mariposas = [];
-for (let i = 0; i < 6; i++) {
+for (let i = 0; i < 12; i++) {
   mariposas.push({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height * 0.6,
-    vx: Math.random() * 0.8 + 0.3,
-    fase: Math.random() * Math.PI
+    vx: Math.random() * 0.6 + 0.2,
+    fase: Math.random() * Math.PI,
+    color: colores[Math.floor(Math.random()*colores.length)]
   });
 }
 
-function dibujarMariposas() {
+function dibujarMariposas(viento) {
   mariposas.forEach(m => {
-    m.x += m.vx;
+    m.x += m.vx + viento * 0.5;
     m.y += Math.sin(m.fase) * 0.8;
     m.fase += 0.08;
 
@@ -121,17 +126,15 @@ function dibujarMariposas() {
     ctx.save();
     ctx.translate(m.x, m.y);
 
-    // alas animadas
     const flap = Math.sin(m.fase) * 0.6;
 
-    ctx.fillStyle = "#ff9ed6";
+    ctx.fillStyle = m.color;
 
     ctx.beginPath();
     ctx.ellipse(-6, 0, 6, 10, flap, 0, Math.PI*2);
     ctx.ellipse(6, 0, 6, 10, -flap, 0, Math.PI*2);
     ctx.fill();
 
-    // cuerpo
     ctx.fillStyle = "#333";
     ctx.fillRect(-1, -6, 2, 12);
 
@@ -139,28 +142,30 @@ function dibujarMariposas() {
   });
 }
 
-// ✨ LUCIÉRNAGAS (ARREGLADAS)
-const luciernagas = [];
-for (let i = 0; i < 40; i++) {
-  luciernagas.push({
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height * 0.7,
-    fase: Math.random() * Math.PI
+// ✨ partículas mágicas
+const particulas = [];
+for (let i = 0; i < 50; i++) {
+  particulas.push({
+    x: Math.random()*canvas.width,
+    y: Math.random()*canvas.height,
+    size: Math.random()*2,
+    fase: Math.random()*Math.PI
   });
 }
 
-function dibujarLuciernagas(t) {
-  luciernagas.forEach(l => {
-    l.fase += 0.05;
+function dibujarMagia() {
+  particulas.forEach(p=>{
+    p.fase += 0.05;
+    p.y -= 0.2;
 
-    const brillo = (Math.sin(l.fase) + 1) / 2;
-
-    ctx.globalAlpha = (1 - t) * brillo;
+    ctx.globalAlpha = (Math.sin(p.fase)+1)/2;
 
     ctx.beginPath();
-    ctx.arc(l.x, l.y, 2.5, 0, Math.PI*2);
-    ctx.fillStyle = "#fff8a6";
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+    ctx.fillStyle = "#ffffff";
     ctx.fill();
+
+    if(p.y < 0) p.y = canvas.height;
   });
 
   ctx.globalAlpha = 1;
@@ -179,214 +184,175 @@ function agregarRosaSuelo() {
   }
 }
 
-function dibujarRosasSuelo() {
+function dibujarRosasSuelo(viento) {
   rosasSuelo.forEach(r => {
-    ctx.drawImage(imgRosa, r.x, r.y, r.size, r.size);
+    ctx.drawImage(imgRosa, r.x + viento*2, r.y, r.size, r.size);
   });
 }
 
-// 🌅 FONDO + SOL/LUNA
+// 🌅 fondo
 function fondo() {
   tiempoDia += 0.002;
-  const t = (Math.sin(tiempoDia) + 1) / 2;
+  const t = (Math.sin(tiempoDia)+1)/2;
 
-  const r = 146 * t + 20 * (1 - t);
-  const g = 189 * t + 30 * (1 - t);
-  const b = 233 * t + 70 * (1 - t);
+  const r = 146*t + 20*(1-t);
+  const g = 189*t + 30*(1-t);
+  const b = 233*t + 70*(1-t);
 
   ctx.fillStyle = `rgb(${r},${g},${b})`;
-  ctx.fillRect(0, 0, canvas.width, canvas.height * 0.75);
+  ctx.fillRect(0,0,canvas.width,canvas.height*0.75);
 
-  // suelo
   const grad = ctx.createLinearGradient(0, canvas.height*0.75, 0, canvas.height);
-  grad.addColorStop(0, "#6fcf3b");
-  grad.addColorStop(1, "#3f7d1f");
+  grad.addColorStop(0,"#6fcf3b");
+  grad.addColorStop(1,"#3f7d1f");
 
   ctx.fillStyle = grad;
-  ctx.fillRect(0, canvas.height * 0.75, canvas.width, canvas.height * 0.25);
+  ctx.fillRect(0,canvas.height*0.75,canvas.width,canvas.height*0.25);
 
-  // ☀️🌙 visibles
-  const x = canvas.width - 120;
-  const y = 120 + Math.sin(tiempoDia) * 50;
+  // sol/luna
+  const x = canvas.width-120;
+  const y = 120 + Math.sin(tiempoDia)*50;
 
   ctx.globalAlpha = t;
   ctx.beginPath();
-  ctx.arc(x, y, 40, 0, Math.PI*2);
-  ctx.fillStyle = "#FFD700";
+  ctx.arc(x,y,40,0,Math.PI*2);
+  ctx.fillStyle="#FFD700";
   ctx.fill();
 
-  ctx.globalAlpha = 1 - t;
+  ctx.globalAlpha = 1-t;
   ctx.beginPath();
-  ctx.arc(x, y, 30, 0, Math.PI*2);
-  ctx.fillStyle = "#ddd";
+  ctx.arc(x,y,30,0,Math.PI*2);
+  ctx.fillStyle="#ddd";
   ctx.fill();
 
   ctx.globalAlpha = 1;
-
-  dibujarLuciernagas(t);
 }
 
-// texto lateral
-function textoLateral() {
-  ctx.fillStyle = "white";
-  ctx.font = "65px Dancing Script";
-
-  const palabras = ["Estas", "25 rosas", "son", "porque:"];
-  let y = 150;
-
-  palabras.forEach(p => {
-    ctx.fillText(p, 120, y);
-    y += 90;
-  });
-}
-
-// semilla imagen
-function dibujarSemilla() {
-  ctx.drawImage(
-    imgSemilla,
-    semillaX - semillaScale/2,
-    semillaY - semillaScale/2,
-    semillaScale,
-    semillaScale
-  );
-}
-
-// 🌿 TALLO (VERDE BONITO)
+// 🌿 tallo corazón
 function actualizarTallo() {
   const baseX = canvas.width * 0.55;
   const baseY = canvas.height * 0.75;
-  const tiempo = Date.now() * 0.0015;
 
   puntos = [];
 
   for (let i = 0; i < clicks; i++) {
     const t = i / maxRosas;
 
-    const viento = Math.sin(tiempo + i * 0.4) * 10;
-    const curva = Math.sin(i * 0.5) * 120;
+    const scale = 12;
+    const x = scale * 16 * Math.pow(Math.sin(t*Math.PI),3);
+    const y = -scale*(13*Math.cos(t*Math.PI) - 5*Math.cos(2*t*Math.PI) - 2*Math.cos(3*t*Math.PI) - Math.cos(4*t*Math.PI));
 
-    const x = baseX + curva + viento;
-    const y = baseY - t * canvas.height * 0.6;
-
-    puntos.push({x, y});
+    puntos.push({
+      x: baseX + x,
+      y: baseY + y
+    });
   }
 }
 
-function dibujarTallo() {
+function dibujarTallo(viento) {
   if (puntos.length < 2) return;
 
-  ctx.strokeStyle = "#7ed957"; // 👈 verde más claro bonito
+  ctx.strokeStyle = "#7ed957";
   ctx.lineWidth = 6;
 
   ctx.beginPath();
   ctx.moveTo(puntos[0].x, puntos[0].y);
 
   for (let i = 1; i < puntos.length; i++) {
-    ctx.quadraticCurveTo(
-      puntos[i-1].x,
-      puntos[i-1].y,
-      puntos[i].x,
-      puntos[i].y
-    );
+    ctx.lineTo(puntos[i].x + viento*5, puntos[i].y);
   }
 
   ctx.stroke();
 }
 
-// 🌹 rosa imagen
-function dibujarRosa(x, y, progreso, grande=false) {
-  const size = (grande ? 90 : 50) * progreso;
+// 🌹 rosa
+function dibujarRosa(x,y,progreso,grande=false){
+  const size = (grande?90:50)*progreso;
 
-  if (grande) {
-    ctx.shadowColor = "#ff8080";
-    ctx.shadowBlur = 30;
+  if(grande){
+    ctx.shadowColor="#ff8080";
+    ctx.shadowBlur=30;
   }
 
-  ctx.drawImage(
-    imgRosa,
-    x - size/2,
-    y - size/2,
-    size,
-    size
-  );
-
-  ctx.shadowBlur = 0;
+  ctx.drawImage(imgRosa,x-size/2,y-size/2,size,size);
+  ctx.shadowBlur=0;
 }
 
-// rosas principales
-function dibujarRosas() {
-  for (let i = 0; i < puntos.length; i++) {
-    const p = puntos[i];
-    const ultima = (i === maxRosas - 1);
+// 🌹 rosas
+function dibujarRosas(viento){
+  for(let i=0;i<puntos.length;i++){
+    const p=puntos[i];
+    const ultima=(i===maxRosas-1);
 
-    if (progresoRosas[i] < 1) {
-      progresoRosas[i] += 0.03;
+    if(progresoRosas[i]<1) progresoRosas[i]+=0.03;
+
+    dibujarRosa(p.x+viento*3,p.y,progresoRosas[i],ultima);
+
+    if(Math.random()<0.006){
+      crearPetalo(p.x,p.y);
     }
 
-    dibujarRosa(p.x, p.y, progresoRosas[i], ultima);
-
-    if (Math.random() < 0.006) {
-      crearPetalo(p.x, p.y);
-    }
-  }
-
-  for (let i = 0; i < puntos.length; i++) {
-    const p = puntos[i];
-    const ultima = (i === maxRosas - 1);
-
-    if (ultima && progresoRosas[i] >= 1) {
-      if (!explosionHecha) {
-        explosionPetalos(p.x, p.y);
-        explosionHecha = true;
+    if(ultima && progresoRosas[i]>=1){
+      if(!explosionHecha){
+        explosionPetalos(p.x,p.y);
+        explosionHecha=true;
       }
 
-      ctx.font = "40px Dancing Script";
-      ctx.fillStyle = "white";
-      ctx.fillText("Eres lo más bonito que tengo 💛", p.x - 180, p.y - 60);
+      ctx.font="40px Dancing Script";
+      ctx.fillStyle="white";
+      ctx.fillText("Eres lo más bonito que tengo 💛", p.x-180, p.y-60);
     }
   }
+}
+
+// 🌱 semilla
+function dibujarSemilla(){
+  ctx.drawImage(imgSemilla,semillaX-semillaScale/2,semillaY-semillaScale/2,semillaScale,semillaScale);
 }
 
 // click
-window.addEventListener("click", () => {
-  if (!plantada && !animandoSemilla) {
-    animandoSemilla = true;
-  } else if (plantada && clicks < maxRosas) {
+window.addEventListener("click",()=>{
+  if(!plantada && !animandoSemilla){
+    animandoSemilla=true;
+  } else if(plantada && clicks<maxRosas){
     clicks++;
     agregarRosaSuelo();
   }
 });
 
 // loop
-function loop() {
+function loop(){
   requestAnimationFrame(loop);
 
-  fondo();
-  textoLateral();
-  dibujarRosasSuelo();
-  dibujarMariposas();
+  vientoTiempo += 0.01;
+  const viento = Math.sin(vientoTiempo);
 
-  if (animandoSemilla && !plantada) {
+  fondo();
+  dibujarMagia();
+  dibujarRosasSuelo(viento);
+  dibujarMariposas(viento);
+
+  if(animandoSemilla && !plantada){
     semillaScale -= 0.5;
 
-    if (semillaScale <= 10) cayendo = true;
+    if(semillaScale <= 10) cayendo=true;
 
-    if (cayendo) {
+    if(cayendo){
       semillaY += 4;
 
-      if (semillaY >= canvas.height * 0.75) {
-        plantada = true;
+      if(semillaY >= canvas.height*0.75){
+        plantada=true;
       }
     }
   }
 
-  if (!plantada) {
+  if(!plantada){
     dibujarSemilla();
   } else {
     actualizarTallo();
-    dibujarTallo();
-    dibujarRosas();
-    dibujarPetalos();
+    dibujarTallo(viento);
+    dibujarRosas(viento);
+    dibujarPetalos(viento);
   }
 }
 
