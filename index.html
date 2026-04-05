@@ -25,6 +25,7 @@ canvas.height = window.innerHeight;
 const maxRosas = 25;
 let clicks = 0;
 let tiempoDia = 0;
+let explosionHecha = false;
 
 // imágenes
 const imgRosa = new Image();
@@ -54,7 +55,7 @@ let animandoSemilla = false;
 let puntos = [];
 let progresoRosas = new Array(maxRosas).fill(0);
 
-// 🌹 rosas del suelo
+// 🌹 suelo
 const rosasSuelo = [];
 
 function agregarRosaSuelo() {
@@ -87,6 +88,20 @@ function crearPetalo(x, y) {
   });
 }
 
+function explosionPetalos(x, y) {
+  for (let i = 0; i < 100; i++) {
+    petalos.push({
+      x,
+      y,
+      vx: Math.random() * 6 - 3,
+      vy: Math.random() * -5 - 1,
+      size: Math.random() * 3 + 2,
+      rot: Math.random() * Math.PI,
+      vr: Math.random() * 0.2 - 0.1
+    });
+  }
+}
+
 function dibujarPetalos() {
   ctx.fillStyle = "#ff8fa3";
 
@@ -103,7 +118,7 @@ function dibujarPetalos() {
 
     p.x += p.vx;
     p.y += p.vy;
-    p.vy += 0.02;
+    p.vy += 0.03;
     p.rot += p.vr;
   });
 }
@@ -165,7 +180,7 @@ function dibujarLuciernagas(t) {
   ctx.globalAlpha = 1;
 }
 
-// 🌅 fondo azul
+// 🌅 fondo
 function fondo() {
   tiempoDia += 0.002;
   const t = (Math.sin(tiempoDia) + 1) / 2;
@@ -183,7 +198,6 @@ function fondo() {
   ctx.fillStyle = `rgb(${r-40},${g-40},${b-40})`;
   ctx.fillRect(0, canvas.height * 0.75, canvas.width, canvas.height * 0.25);
 
-  // sol / luna
   const x = canvas.width - 120;
   const y = 120;
 
@@ -218,7 +232,7 @@ function textoLateral() {
   });
 }
 
-// 🌿 tallo CURVO (regresamos al bueno)
+// tallo
 function actualizarTallo() {
   const baseX = canvas.width * 0.6;
   const baseY = canvas.height * 0.75;
@@ -274,14 +288,7 @@ function dibujarRosa(x, y, progreso, grande=false) {
   ctx.shadowBlur = 0;
 }
 
-// texto rosa
-function texto(txt, x, y) {
-  ctx.font = "22px Dancing Script";
-  ctx.fillStyle = "white";
-  ctx.fillText(txt, x + 40, y - 20);
-}
-
-// rosas principales
+// 🌹 rosas + TEXTO ENCIMA
 function dibujarRosas() {
   for (let i = 0; i < puntos.length; i++) {
     const p = puntos[i];
@@ -294,10 +301,35 @@ function dibujarRosas() {
     dibujarRosa(p.x, p.y, progresoRosas[i], ultima);
 
     if (Math.random() < 0.01) crearPetalo(p.x, p.y);
+  }
+
+  // TEXTO DESPUÉS (encima)
+  for (let i = 0; i < puntos.length; i++) {
+    const p = puntos[i];
 
     if (progresoRosas[i] > 0.6 && i < frases.length) {
-      texto(frases[i], p.x, p.y);
+      ctx.font = "22px Dancing Script";
+      ctx.fillStyle = "white";
+      ctx.fillText(frases[i], p.x + 40, p.y - 20);
     }
+  }
+
+  // 🌹 última rosa
+  const ultima = puntos[puntos.length - 1];
+
+  if (ultima && progresoRosas[puntos.length - 1] >= 1) {
+    if (!explosionHecha) {
+      explosionPetalos(ultima.x, ultima.y);
+      explosionHecha = true;
+    }
+
+    ctx.font = "50px Dancing Script";
+    ctx.fillStyle = "white";
+    ctx.fillText(
+      "Eres lo más bonito que tengo 💛",
+      canvas.width / 2 - 260,
+      80
+    );
   }
 }
 
@@ -318,7 +350,7 @@ window.addEventListener("click", () => {
     animandoSemilla = true;
   } else if (plantada && clicks < maxRosas) {
     clicks++;
-    agregarRosaSuelo(); // 👈 vuelve a aparecer suelo 🌹
+    agregarRosaSuelo();
   }
 });
 
