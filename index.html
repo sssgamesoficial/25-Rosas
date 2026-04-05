@@ -25,7 +25,6 @@ canvas.height = window.innerHeight;
 const maxRosas = 25;
 let clicks = 0;
 let tiempoDia = 0;
-let explosionHecha = false;
 
 // imágenes
 const imgRosa = new Image();
@@ -55,7 +54,26 @@ let animandoSemilla = false;
 let puntos = [];
 let progresoRosas = new Array(maxRosas).fill(0);
 
-// 🌸 pétalos suaves
+// 🌹 rosas del suelo
+const rosasSuelo = [];
+
+function agregarRosaSuelo() {
+  for (let i = 0; i < 4; i++) {
+    rosasSuelo.push({
+      x: Math.random() * canvas.width,
+      y: canvas.height * 0.75 + Math.random() * 80,
+      size: Math.random() * 30 + 25
+    });
+  }
+}
+
+function dibujarRosasSuelo() {
+  rosasSuelo.forEach(r => {
+    ctx.drawImage(imgRosa, r.x, r.y, r.size, r.size);
+  });
+}
+
+// 🌸 pétalos
 const petalos = [];
 
 function crearPetalo(x, y) {
@@ -90,11 +108,11 @@ function dibujarPetalos() {
   });
 }
 
-// 🦋 mariposas MÁS
+// 🦋 mariposas
 const mariposas = [];
 const colores = ["#ff9ed6","#ffd166","#9bf6ff","#caffbf","#ffc6ff"];
 
-for (let i = 0; i < 12; i++) {
+for (let i = 0; i < 10; i++) {
   mariposas.push({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height * 0.6,
@@ -123,7 +141,7 @@ function dibujarMariposas() {
 
 // ✨ luciérnagas
 const luciernagas = [];
-for (let i = 0; i < 50; i++) {
+for (let i = 0; i < 40; i++) {
   luciernagas.push({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height * 0.7,
@@ -147,7 +165,7 @@ function dibujarLuciernagas(t) {
   ctx.globalAlpha = 1;
 }
 
-// 🌅 fondo azul bonito
+// 🌅 fondo azul
 function fondo() {
   tiempoDia += 0.002;
   const t = (Math.sin(tiempoDia) + 1) / 2;
@@ -162,7 +180,6 @@ function fondo() {
   ctx.fillStyle = `rgb(${r},${g},${b})`;
   ctx.fillRect(0, 0, canvas.width, canvas.height * 0.75);
 
-  // suelo simple
   ctx.fillStyle = `rgb(${r-40},${g-40},${b-40})`;
   ctx.fillRect(0, canvas.height * 0.75, canvas.width, canvas.height * 0.25);
 
@@ -187,9 +204,9 @@ function fondo() {
   dibujarLuciernagas(t);
 }
 
-// 📝 TEXTO (ARREGLADO)
+// texto lateral
 function textoLateral() {
-  ctx.fillStyle = "rgba(255,255,255,0.95)";
+  ctx.fillStyle = "white";
   ctx.font = "60px Dancing Script";
 
   const palabras = ["Estas", "25 rosas", "son", "porque:"];
@@ -201,49 +218,49 @@ function textoLateral() {
   });
 }
 
-// 🌿 CORAZÓN COMPLETO CENTRADO
+// 🌿 tallo CURVO (regresamos al bueno)
 function actualizarTallo() {
-  const cx = canvas.width * 0.55;
+  const baseX = canvas.width * 0.6;
   const baseY = canvas.height * 0.75;
+  const tiempo = Date.now() * 0.0015;
 
   puntos = [];
 
   for (let i = 0; i < clicks; i++) {
-    const t = i / (maxRosas - 1);
+    const t = i / maxRosas;
 
-    // ecuación corazón
-    const x = 16 * Math.pow(Math.sin(Math.PI * t), 3);
-    const y = -(13 * Math.cos(Math.PI * t) -
-               5 * Math.cos(2 * Math.PI * t) -
-               2 * Math.cos(3 * Math.PI * t) -
-               Math.cos(4 * Math.PI * t));
+    const viento = Math.sin(tiempo + i * 0.4) * 15;
+    const curva = Math.sin(i * 0.5) * 120;
 
-    const scale = 10;
+    const x = baseX + curva + viento;
+    const y = baseY - t * canvas.height * 0.6;
 
-    puntos.push({
-      x: cx + x * scale,
-      y: baseY - (y * scale + 50) // 👈 sube todo el corazón
-    });
+    puntos.push({x, y});
   }
 }
 
 function dibujarTallo() {
   if (puntos.length < 2) return;
 
-  ctx.strokeStyle = "#7ed957"; // verde claro bonito
+  ctx.strokeStyle = "#7ed957";
   ctx.lineWidth = 6;
 
   ctx.beginPath();
   ctx.moveTo(puntos[0].x, puntos[0].y);
 
   for (let i = 1; i < puntos.length; i++) {
-    ctx.lineTo(puntos[i].x, puntos[i].y);
+    ctx.quadraticCurveTo(
+      puntos[i-1].x,
+      puntos[i-1].y,
+      puntos[i].x,
+      puntos[i].y
+    );
   }
 
   ctx.stroke();
 }
 
-// 🌹 rosa imagen
+// 🌹 rosa
 function dibujarRosa(x, y, progreso, grande=false) {
   const size = (grande ? 90 : 50) * progreso;
 
@@ -264,7 +281,7 @@ function texto(txt, x, y) {
   ctx.fillText(txt, x + 40, y - 20);
 }
 
-// 🌹 rosas
+// rosas principales
 function dibujarRosas() {
   for (let i = 0; i < puntos.length; i++) {
     const p = puntos[i];
@@ -301,6 +318,7 @@ window.addEventListener("click", () => {
     animandoSemilla = true;
   } else if (plantada && clicks < maxRosas) {
     clicks++;
+    agregarRosaSuelo(); // 👈 vuelve a aparecer suelo 🌹
   }
 });
 
@@ -310,6 +328,7 @@ function loop() {
 
   fondo();
   textoLateral();
+  dibujarRosasSuelo();
   dibujarMariposas();
 
   if (animandoSemilla && !plantada) {
