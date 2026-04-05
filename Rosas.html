@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Jardín mágico</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  body { margin: 0; overflow: hidden; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+
+<canvas id="lienzo"></canvas>
+
+<script>
+const canvas = document.getElementById("lienzo");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const maxRosas = 25;
+let clicks = 0;
+let explosionHecha = false;
+
+// 🌅 tiempo día/noche
+let tiempoDia = 0;
+
+// 🖼️ IMÁGENES (solo estas dos)
+const imgRosa = new Image();
+imgRosa.src = "rosa.png";
+
+const imgSemilla = new Image();
+imgSemilla.src = "semilla.png";
+
+const frases = [
+  "Eres hermosa","Me haces feliz","Eres única","Mi mundo eres tú",
+  "Eres bella","Te quiero","Eres magia","Eres mi paz","Eres mi alegría","Eres mi sol",
+  "Eres mi luna","Mi todo","Eres especial","Contigo todo","Eres luz",
+  "Mi razón","Mi destino","Mi amor","Eres perfecta","Te necesito",
+  "Eres arte","Mi sueño","Eres vida","Mi corazón","Es para ti 💛"
+];
+
+// 🌱 semilla
+let semillaX = canvas.width / 2;
+let semillaY = canvas.height / 2;
+let semillaScale = 40;
+
+let cayendo = false;
+let plantada = false;
+let animandoSemilla = false;
+
+let puntos = [];
+let progresoRosas = new Array(maxRosas).fill(0);
+
+// 🌸 pétalos (canvas normal)
+const petalos = [];
+
+function crearPetalo(x, y) {
+  petalos.push({
+    x, y,
+    vx: Math.random() * 0.4 - 0.2,
+    vy: Math.random() * 0.6 + 0.3,
+    size: Math.random() * 2 + 1.5,
+    rot: Math.random() * Math.PI,
+    vr: Math.random() * 0.1 - 0.05
+  });
+}
+
+function explosionPetalos(x, y) {
+  for (let i = 0; i < 80; i++) {
+    petalos.push({
+      x,
+      y,
+      vx: Math.random() * 6 - 3,
+      vy: Math.random() * -6 - 1,
+      size: Math.random() * 3 + 2,
+      rot: Math.random() * Math.PI,
+      vr: Math.random() * 0.2 - 0.1
+    });
+  }
+}
+
+function dibujarPetalos() {
+  ctx.fillStyle = "#ff6b6b";
+
+  petalos.forEach(p => {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+
+    ctx.beginPath();
+    ctx.ellipse(0, 0, p.size, p.size * 0.6, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.restore();
+
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.05;
+    p.rot += p.vr;
+  });
+
+  petalos.splice(0, petalos.length - 300);
+}
+
+// 🌹 rosas suelo (IMAGEN)
+const rosasSuelo = [];
+
+function agregarRosaSuelo() {
+  for (let i = 0; i < 6; i++) {
+    rosasSuelo.push({
+      x: Math.random() * canvas.width,
+      y: canvas.height * 0.75 + Math.random() * 80,
+      size: Math.random() * 30 + 30
+    });
+  }
+}
+
+function dibujarRosasSuelo() {
+  rosasSuelo.forEach(r => {
+    ctx.drawImage(imgRosa, r.x, r.y, r.size, r.size);
+  });
+}
+
+// 🌅 fondo
+function fondo() {
+  tiempoDia += 0.002;
+  const t = (Math.sin(tiempoDia) + 1) / 2;
+
+  const dia = { r:146, g:189, b:233 };
+  const noche = { r:20, g:30, b:70 };
+
+  const r = dia.r * t + noche.r * (1 - t);
+  const g = dia.g * t + noche.g * (1 - t);
+  const b = dia.b * t + noche.b * (1 - t);
+
+  ctx.fillStyle = `rgb(${r},${g},${b})`;
+  ctx.fillRect(0, 0, canvas.width, canvas.height * 0.75);
+
+  const grad = ctx.createLinearGradient(0, canvas.height*0.75, 0, canvas.height);
+  grad.addColorStop(0, "#6fcf3b");
+  grad.addColorStop(1, "#3f7d1f");
+
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, canvas.height * 0.75, canvas.width, canvas.height * 0.25);
+}
+
+// texto lateral
+function textoLateral() {
+  ctx.fillStyle = "white";
+  ctx.font = "65px Dancing Script";
+
+  const palabras = ["Estas", "25 rosas", "son", "porque:"];
+  let y = 150;
+
+  palabras.forEach(p => {
+    ctx.fillText(p, 120, y);
+    y += 90;
+  });
+}
+
+// 🌱 semilla IMAGEN
+function dibujarSemilla() {
+  ctx.drawImage(
+    imgSemilla,
+    semillaX - semillaScale/2,
+    semillaY - semillaScale/2,
+    semillaScale,
+    semillaScale
+  );
+}
+
+// 🌿 tallo
+function actualizarTallo() {
+  const baseX = canvas.width * 0.55;
+  const baseY = canvas.height * 0.75;
+  const tiempo = Date.now() * 0.0015;
+
+  puntos = [];
+
+  for (let i = 0; i < clicks; i++) {
+    const t = i / maxRosas;
+
+    const viento = Math.sin(tiempo + i * 0.4) * 15;
+    const curva = Math.sin(i * 0.5) * 150;
+
+    const x = baseX + curva + viento;
+    const y = baseY - t * canvas.height * 0.6;
+
+    puntos.push({x, y});
+  }
+}
+
+function dibujarTallo() {
+  if (puntos.length < 2) return;
+
+  ctx.strokeStyle = "#2f4f2f";
+  ctx.lineWidth = 8;
+
+  ctx.beginPath();
+  ctx.moveTo(puntos[0].x, puntos[0].y);
+
+  for (let i = 1; i < puntos.length; i++) {
+    ctx.quadraticCurveTo(
+      puntos[i-1].x,
+      puntos[i-1].y,
+      puntos[i].x,
+      puntos[i].y
+    );
+  }
+
+  ctx.stroke();
+}
+
+// 🌹 rosa IMAGEN + glow
+function dibujarRosa(x, y, progreso, grande=false) {
+  const size = (grande ? 90 : 50) * progreso;
+
+  if (grande) {
+    ctx.shadowColor = "#ff8080";
+    ctx.shadowBlur = 30;
+  }
+
+  ctx.drawImage(
+    imgRosa,
+    x - size/2,
+    y - size/2,
+    size,
+    size
+  );
+
+  ctx.shadowBlur = 0;
+}
+
+// texto
+function texto(txt, x, y) {
+  ctx.font = "22px Dancing Script";
+  ctx.fillStyle = "white";
+  ctx.fillText(txt, x + 40, y - 20);
+}
+
+// 🌹 rosas principales
+function dibujarRosas() {
+  for (let i = 0; i < puntos.length; i++) {
+    const p = puntos[i];
+    const ultima = (i === maxRosas - 1);
+
+    if (progresoRosas[i] < 1) {
+      progresoRosas[i] += 0.03;
+    }
+
+    dibujarRosa(p.x, p.y, progresoRosas[i], ultima);
+
+    if (Math.random() < 0.008) {
+      crearPetalo(p.x, p.y);
+    }
+  }
+
+  for (let i = 0; i < puntos.length; i++) {
+    const p = puntos[i];
+    const ultima = (i === maxRosas - 1);
+
+    if (progresoRosas[i] > 0.6 && i < frases.length) {
+      texto(frases[i], p.x, p.y);
+    }
+
+    if (ultima && progresoRosas[i] >= 1) {
+      if (!explosionHecha) {
+        explosionPetalos(p.x, p.y);
+        explosionHecha = true;
+      }
+
+      ctx.font = "40px Dancing Script";
+      ctx.fillStyle = "white";
+      ctx.fillText("Eres lo más bonito que tengo 💛", p.x - 180, p.y - 60);
+    }
+  }
+}
+
+// click
+window.addEventListener("click", () => {
+  if (!plantada && !animandoSemilla) {
+    animandoSemilla = true;
+  } else if (plantada && clicks < maxRosas) {
+    clicks++;
+    agregarRosaSuelo();
+  }
+});
+
+// loop
+function loop() {
+  requestAnimationFrame(loop);
+
+  fondo();
+  textoLateral();
+  dibujarRosasSuelo();
+
+  if (animandoSemilla && !plantada) {
+    semillaScale -= 0.5;
+
+    if (semillaScale <= 10) cayendo = true;
+
+    if (cayendo) {
+      semillaY += 6;
+
+      if (semillaY >= canvas.height * 0.75) {
+        plantada = true;
+      }
+    }
+  }
+
+  if (!plantada) {
+    dibujarSemilla();
+  } else {
+    actualizarTallo();
+    dibujarTallo();
+    dibujarRosas();
+    dibujarPetalos();
+  }
+}
+
+loop();
+</script>
+
+</body>
+</html>
