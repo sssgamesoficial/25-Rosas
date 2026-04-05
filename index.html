@@ -28,7 +28,6 @@ let explosionHecha = false;
 
 let tiempoDia = 0;
 
-// imágenes
 const imgRosa = new Image();
 imgRosa.src = "rosa.png";
 
@@ -178,7 +177,7 @@ function dibujarRosasSuelo() {
   });
 }
 
-// fondo
+// 🌅 fondo + sol/luna
 function fondo() {
   tiempoDia += 0.003;
   const t = (Math.sin(tiempoDia) + 1) / 2;
@@ -196,10 +195,26 @@ function fondo() {
   ctx.fillStyle = `rgb(${r-40},${g-40},${b-40})`;
   ctx.fillRect(0, canvas.height * 0.75, canvas.width, canvas.height * 0.25);
 
+  // 🌞 SOL
+  ctx.globalAlpha = t;
+  ctx.beginPath();
+  ctx.arc(canvas.width - 120, 120, 40, 0, Math.PI*2);
+  ctx.fillStyle = "#FFD700";
+  ctx.fill();
+
+  // 🌙 LUNA
+  ctx.globalAlpha = 1 - t;
+  ctx.beginPath();
+  ctx.arc(canvas.width - 120, 120, 30, 0, Math.PI*2);
+  ctx.fillStyle = "#ddd";
+  ctx.fill();
+
+  ctx.globalAlpha = 1;
+
   dibujarLuciernagas(t);
 }
 
-// texto lateral
+// texto izquierda
 function textoLateral() {
   ctx.fillStyle = "white";
   ctx.font = "60px Dancing Script";
@@ -213,7 +228,7 @@ function textoLateral() {
   });
 }
 
-// semilla
+// 🌱 semilla
 function dibujarSemilla() {
   ctx.drawImage(
     imgSemilla,
@@ -279,14 +294,14 @@ function dibujarRosa(x, y, progreso, grande=false) {
   );
 }
 
-// texto
+// texto rosa
 function texto(txt, x, y) {
   ctx.font = "24px Dancing Script";
   ctx.fillStyle = "white";
   ctx.fillText(txt, x + 30, y - 10);
 }
 
-// rosas
+// 🌹 rosas
 function dibujarRosas() {
   for (let i = 0; i < puntos.length; i++) {
     const p = puntos[i];
@@ -318,16 +333,17 @@ function dibujarRosas() {
         explosionHecha = true;
       }
 
-      // 💛 TEXTO FINAL A LA DERECHA
-      ctx.font = "50px Dancing Script";
-      ctx.fillStyle = "white";
+      // 💛 TEXTO DERECHO EN BLOQUES
+      const palabras = ["Eres", "lo más bonito", "que tengo 💛"];
+      let y = 200;
+
+      ctx.font = "55px Dancing Script";
       ctx.textAlign = "right";
 
-      ctx.fillText(
-        "Eres lo más bonito que tengo 💛",
-        canvas.width - 60,
-        canvas.height * 0.2
-      );
+      palabras.forEach(palabra => {
+        ctx.fillText(palabra, canvas.width - 60, y);
+        y += 80;
+      });
 
       ctx.textAlign = "start";
     }
