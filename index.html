@@ -42,7 +42,7 @@ const frases = [
   "Eres arte","Mi sueño","Eres vida","Mi corazón","Es para ti 💛"
 ];
 
-// semilla
+// Semilla (OSEA SPAWNEAR)
 let semillaX = canvas.width / 2;
 let semillaY = canvas.height / 2;
 let semillaScale = 40;
@@ -54,7 +54,7 @@ let animandoSemilla = false;
 let puntos = [];
 let progresoRosas = new Array(maxRosas).fill(0);
 
-// pétalos
+// Pétalos
 const petalos = [];
 
 function crearPetalo(x, y) {
@@ -103,7 +103,7 @@ function dibujarPetalos() {
   });
 }
 
-// 🦋 mariposas
+//  Mariposas (TRACIONERAAAA COMO LA DE MANA)
 const mariposas = [];
 for (let i = 0; i < 10; i++) {
   mariposas.push({
@@ -132,7 +132,7 @@ function dibujarMariposas() {
   });
 }
 
-// ✨ luciérnagas
+// Luciérnagas (NUNCA LAS HE VISTO 3.14  3.14  3.14)
 const luciernagas = [];
 for (let i = 0; i < 50; i++) {
   luciernagas.push({
@@ -158,7 +158,7 @@ function dibujarLuciernagas(t) {
   ctx.globalAlpha = 1;
 }
 
-// rosas suelo
+// Rosas que crecen en el suelo
 const rosasSuelo = [];
 
 function agregarRosaSuelo() {
@@ -177,7 +177,7 @@ function dibujarRosasSuelo() {
   });
 }
 
-// 🌅 fondo + sol/luna
+// Fondo con el sol y la luna nos dan energía...
 function fondo() {
   tiempoDia += 0.003;
   const t = (Math.sin(tiempoDia) + 1) / 2;
@@ -195,14 +195,14 @@ function fondo() {
   ctx.fillStyle = `rgb(${r-40},${g-40},${b-40})`;
   ctx.fillRect(0, canvas.height * 0.75, canvas.width, canvas.height * 0.25);
 
-  // 🌞 SOL
+  // Luis Miguel (EL SOL DE MÉXICO)
   ctx.globalAlpha = t;
   ctx.beginPath();
   ctx.arc(canvas.width - 120, 120, 40, 0, Math.PI*2);
   ctx.fillStyle = "#FFD700";
   ctx.fill();
 
-  // 🌙 LUNA
+  // Ana Gabriel (LUNAAAAA, TÚ QUE LA VEEEEEES)
   ctx.globalAlpha = 1 - t;
   ctx.beginPath();
   ctx.arc(canvas.width - 120, 120, 30, 0, Math.PI*2);
@@ -214,7 +214,7 @@ function fondo() {
   dibujarLuciernagas(t);
 }
 
-// texto izquierda
+// Texto izquierda
 function textoLateral() {
   ctx.fillStyle = "white";
   ctx.font = "60px Dancing Script";
@@ -228,7 +228,7 @@ function textoLateral() {
   });
 }
 
-// 🌱 semilla
+//  Semilla 
 function dibujarSemilla() {
   ctx.drawImage(
     imgSemilla,
@@ -239,7 +239,7 @@ function dibujarSemilla() {
   );
 }
 
-// tallo
+// Tallo
 function actualizarTallo() {
   const baseX = canvas.width * 0.5;
   const baseY = canvas.height * 0.75;
@@ -281,7 +281,7 @@ function dibujarTallo() {
   ctx.stroke();
 }
 
-// rosa
+// Rosa
 function dibujarRosa(x, y, progreso, grande=false) {
   const size = (grande ? 100 : 55) * progreso;
 
@@ -294,14 +294,14 @@ function dibujarRosa(x, y, progreso, grande=false) {
   );
 }
 
-// texto rosa
+// Texto rosa
 function texto(txt, x, y) {
   ctx.font = "24px Dancing Script";
   ctx.fillStyle = "white";
   ctx.fillText(txt, x + 30, y - 10);
 }
 
-// 🌹 rosas
+//  Rosas
 function dibujarRosas() {
   for (let i = 0; i < puntos.length; i++) {
     const p = puntos[i];
@@ -333,7 +333,7 @@ function dibujarRosas() {
         explosionHecha = true;
       }
 
-      // 💛 TEXTO DERECHO EN BLOQUES
+      // TEXTO DERECHO EN BLOQUES
       const palabras = ["Eres", "lo más bonito", "que tengo 💛"];
       let y = 200;
 
@@ -360,7 +360,7 @@ window.addEventListener("click", () => {
   }
 });
 
-// loop
+// Loop
 function loop() {
   requestAnimationFrame(loop);
 
